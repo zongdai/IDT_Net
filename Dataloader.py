@@ -1,6 +1,5 @@
 import os
 import torch
-import pandas as pd
 from skimage import io, transform
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,8 +13,8 @@ class IDT_Net_Dataset(Dataset):
                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
                            ])):
         
-       	self.source_images = os.listdir(os.path.join(self.root_dir, 'source'))
-       	self.target_images = os.listdir(os.path.join(self.root_dir, 'target'))
+       	self.source_images = os.listdir(os.path.join(root_dir, 'source'))
+       	self.target_images = os.listdir(os.path.join(root_dir, 'target'))
         self.root_dir = root_dir
         self.transform = transform
 
