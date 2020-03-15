@@ -17,7 +17,7 @@ class MaskGenerator(nn.Module):
     def __init__(self, ngpu=1, nc=3, ngf=32):
         super(MaskGenerator, self).__init__()
         self.ngpu = ngpu
-        self.main = nn.Sequential(
+        self.main1 = nn.Sequential(
             # input is (nc) x 224 x 224
             nn.Conv2d(nc, ngf, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
@@ -30,14 +30,33 @@ class MaskGenerator(nn.Module):
             nn.BatchNorm2d(ngf * 4),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ngf*4) x 28 x 28
-            # nn.Conv2d(ngf * 4, ngf * 8, 4, 2, 1, bias=False),
-            # nn.BatchNorm2d(ngf * 8),
-            # nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(ngf * 4, ngf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ngf*8) x 14 x 14
-            
-            # nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
-            # nn.BatchNorm2d(ngf * 4),
-            # nn.ReLU(True),
+        )
+        self.main2 = nn.Sequential(
+            # input is (nc) x 224 x 224
+            nn.Conv2d(nc, ngf, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ngf) x 112 x 112
+            nn.Conv2d(ngf, ngf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ngf*2) x 56 x 56
+            nn.Conv2d(ngf * 2, ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ngf*4) x 28 x 28
+            nn.Conv2d(ngf * 4, ngf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ngf*8) x 14 x 14
+        )
+        self.deconv = nn.Sequential(
+            nn.ConvTranspose2d(ngf * 8 * 2, ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
             # state size. (ngf*4) x 28 x 28
             nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ngf * 2),
@@ -48,15 +67,21 @@ class MaskGenerator(nn.Module):
             nn.ReLU(True),
             # state size. (ngf*2) x 112 x 112
             nn.ConvTranspose2d( ngf, nc, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(nc),
-            nn.ReLU(True),
+            # nn.BatchNorm2d(nc*2),
+            # nn.ReLU(True),
             # state size. (ngf) x 224 x 224
-            # nn.Tanh()
+            nn.Sigmoid()
         )
 
-    def forward(self, input):
-
-        return self.main(input) * input
+    def forward(self, source, target):
+        f1 = self.main1(source) 
+        f2 = self.main2(target)
+        f3 = torch.cat((f1, f2), 1)
+        mask = self.deconv(f3)
+        syn = (source * mask * 2) 
+        # syn[syn > 1] = 1.0
+        # syn[syn < 0] = 0
+        return syn
 
 class Discriminator(nn.Module):
     def __init__(self, ngpu=1, nc=3, ndf=32):

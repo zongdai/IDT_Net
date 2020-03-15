@@ -18,14 +18,14 @@ import numpy as np
 dataroot = '../IDT_Net_Data/'
 
 # Number of workers for dataloader
-workers = 2
+workers = 8
 
 # Batch size during training
-batch_size = 32
+batch_size = 1
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
-image_size = 224
+image_size = 64
 
 # Number of channels in the training images. For color images this is 3
 nc = 3
@@ -40,7 +40,7 @@ ngf = 64
 ndf = 64
 
 # Number of training epochs
-num_epochs = 30
+num_epochs = 300
 
 # Learning rate for optimizers
 lr = 0.0002
